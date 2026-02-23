@@ -251,10 +251,10 @@ class BLNETDataHandler:
         """Add a single new sensor."""
         name = data[domain][sensor_id].get('name')
         blnet_id = '{} {} {}'.format(DOMAIN, domain, sensor_id)
-        if name in self.sensors:
+        if blnet_id in self.sensors:
             return False
 
-        self.sensors.add(name)
+        self.sensors.add(blnet_id)
         _LOGGER.info(f"Discovered {domain} sensor {sensor_id} in use, adding")
 
         disc_info = {
@@ -280,10 +280,10 @@ class BLNETDataHandler:
         """Add a single new digital device."""
         name = data['digital'][sensor_id].get('name')
         blnet_id = '{} digital {}'.format(DOMAIN, sensor_id)
-        if name in self.sensors:
+        if blnet_id in self.sensors:
             return False
 
-        self.sensors.add(name)
+        self.sensors.add(blnet_id)
         _LOGGER.info(f"Discovered digital sensor {sensor_id} in use, adding")
 
         disc_info = {
