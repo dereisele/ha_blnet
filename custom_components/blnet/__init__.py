@@ -3,6 +3,7 @@ Connect to a BL-NET via it's web interface and read and write data
 """
 import logging
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 import voluptuous as vol
 from homeassistant.const import (
@@ -11,6 +12,9 @@ from homeassistant.const import (
 from homeassistant.helpers.discovery import load_platform
 from homeassistant.helpers.event import async_track_time_interval
 import homeassistant.helpers.config_validation as cv
+
+if TYPE_CHECKING:
+    import pyblnet
 
 REQUIREMENTS = ['pyblnet==0.9.3']
 
@@ -139,7 +143,7 @@ class BLNETConnector:
 class BLNETDataHandler:
     """Handles data operations for BLNET."""
 
-    def __init__(self, blnet, node, hass, config):
+    def __init__(self, blnet: "pyblnet.BLNET", node, hass, config):
         """Initialize the data handler."""
         self.blnet = blnet
         self.node = node
