@@ -143,12 +143,6 @@ class BLNETConnector:
             use_ta=self.use_ta
         )
 
-    def get_error_message(self, exception, resource):
-        """Generate appropriate error message."""
-        if isinstance(exception, ValueError):
-            return f"No BL-Net reached at {resource}"
-        return f"Configuration invalid: {exception}"
-
 
 class BLNETDataHandler:
     """Handles data operations for BLNET."""
