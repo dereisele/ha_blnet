@@ -8,7 +8,6 @@ from homeassistant.helpers.entity import Entity
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'blnet'
-FRIENDLY_NAME = 'friendly_name'
 
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
@@ -71,14 +70,6 @@ class BLNETComponent(Entity):
     def unit_of_measurement(self):
         """Return the state of the device."""
         return self._unit_of_measurement
-
-    @property
-    def device_state_attributes(self):
-        """Return the state attributes of the device."""
-        attrs = {}
-
-        attrs[FRIENDLY_NAME] = self._friendly_name
-        return attrs
 
     def update(self):
         """Get the latest data from communication device """
