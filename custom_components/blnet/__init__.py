@@ -5,13 +5,16 @@ import logging
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 from homeassistant.const import (
-    CONF_RESOURCE, CONF_PASSWORD, CONF_SCAN_INTERVAL, UnitOfTemperature,
+    CONF_PASSWORD,
+    CONF_RESOURCE,
+    CONF_SCAN_INTERVAL,
+    UnitOfTemperature,
 )
 from homeassistant.helpers.discovery import load_platform
 from homeassistant.helpers.event import async_track_time_interval
-import homeassistant.helpers.config_validation as cv
 
 if TYPE_CHECKING:
     import pyblnet
@@ -62,8 +65,6 @@ CONFIG_SCHEMA = vol.Schema({
 
 def setup(hass, config):
     """Set up the BLNET component."""
-    from pyblnet import BLNET
-
     # Extract configuration
     conf = config[DOMAIN]
     resource = conf.get(CONF_RESOURCE)
@@ -258,7 +259,7 @@ class BLNETDataHandler:
     def _add_single_sensor(self, domain, sensor_id, data):
         """Add a single new sensor."""
         name = data[domain][sensor_id].get('name')
-        blnet_id = '{} {} {}'.format(DOMAIN, domain, sensor_id)
+        blnet_id = f'{DOMAIN} {domain} {sensor_id}'
         if blnet_id in self.sensors:
             return False
 
@@ -287,7 +288,7 @@ class BLNETDataHandler:
     def _add_digital_device(self, sensor_id, data):
         """Add a single new digital device."""
         name = data['digital'][sensor_id].get('name')
-        blnet_id = '{} digital {}'.format(DOMAIN, sensor_id)
+        blnet_id = f'{DOMAIN} digital {sensor_id}'
         if blnet_id in self.sensors:
             return False
 

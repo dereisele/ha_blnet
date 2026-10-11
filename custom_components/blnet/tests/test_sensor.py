@@ -1,10 +1,11 @@
 """Tests for the BLNET sensor component."""
 import unittest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
 
+from custom_components.blnet import BLNETConnector, BLNETDataHandler
 from custom_components.blnet.sensor import BLNETComponent
-from custom_components.blnet import BLNETDataHandler, BLNETConnector
+
 
 class TestBLNETComponent(unittest.TestCase):
     """Test the BLNETComponent class."""

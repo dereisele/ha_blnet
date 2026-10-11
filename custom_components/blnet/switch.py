@@ -5,16 +5,12 @@ Switch to control digital outputs
 """
 import logging
 
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import (
-    STATE_UNKNOWN,
     STATE_OFF,
     STATE_ON,
+    STATE_UNKNOWN,
 )
-
-try:
-    from homeassistant.components.switch import SwitchEntity
-except ImportError:
-    from homeassistant.components.switch import SwitchDevice as SwitchEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +30,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     switch_id = discovery_info['id']
     blnet_id = discovery_info['blnet_id']
     name = discovery_info['name']
-    comm = hass.data['DATA_{}'.format(DOMAIN)]
+    comm = hass.data[f'DATA_{DOMAIN}']
 
     add_devices([BLNETSwitch(switch_id, blnet_id, name, comm),
                  BLNETModeSwitch(switch_id, blnet_id, name, comm)], True)

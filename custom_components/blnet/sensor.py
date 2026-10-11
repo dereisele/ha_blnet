@@ -23,7 +23,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     name = discovery_info['name']
     friendly_name = discovery_info['friendly_name']
     _LOGGER.debug(f"Discovery info: {discovery_info}")
-    comm = hass.data['DATA_{}'.format(DOMAIN)]
+    comm = hass.data[f'DATA_{DOMAIN}']
 
     add_devices([BLNETComponent(hass, sensor_id, name, blnet_id, friendly_name, comm)], True)
     return True
