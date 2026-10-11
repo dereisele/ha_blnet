@@ -10,5 +10,5 @@
   "loggers": ["pyblnet"],
   "requirements": ["pyblnet@git+https://github.com/dereisele/pyblnet@0.13.0"],
   "single_config_entry": true,
-  "version": "0.8.0b1"
+  "version": "0.8.0b2"
 }
