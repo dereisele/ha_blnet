@@ -3,7 +3,7 @@ name = "ha-blnet"
 version = "0.8.0b1"
 description = "Home Assistant custom component for the UVR1611 via BL-NET"
 readme = "README.md"
-requires-python = ">=3.13.2"
+requires-python = ">=3.14"
 dependencies = [
     # Keep in sync with "requirements" in custom_components/blnet/manifest.json
     "pyblnet",
@@ -15,7 +15,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "homeassistant>=2026.2.3",
+    "pytest-cov",
+    "pytest-homeassistant-custom-component",
     "ruff",
 ]
 
@@ -27,3 +28,7 @@ pyblnet = { git = "https://github.com/dereisele/pyblnet", tag = "0.13.0" }
 
 [tool.ruff.lint]
 extend-select = ["UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

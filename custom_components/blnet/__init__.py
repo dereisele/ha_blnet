@@ -136,7 +136,7 @@ class BLNETConnector:
 class BLNETDataHandler:
     """Handles data operations for BLNET."""
 
-    def __init__(self, blnet: "pyblnet.BLNET | None", node, hass, config,
+    def __init__(self, blnet: pyblnet.BLNET | None, node, hass, config,
                  connector=None):
         """Initialize the data handler.
 
