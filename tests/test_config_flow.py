@@ -179,3 +179,14 @@ async def test_options(hass, mock_blnet, mock_config_entry):
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert mock_config_entry.options == {CONF_SCAN_INTERVAL: 60}
+
+
+async def test_import_without_access_mode_aborts(hass, mock_blnet):
+    """A YAML config with neither web nor direct access can never work."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": SOURCE_IMPORT},
+        data={CONF_RESOURCE: "http://192.168.100.19", CONF_USE_WEB: False, CONF_USE_TA: False},
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "no_access_mode"

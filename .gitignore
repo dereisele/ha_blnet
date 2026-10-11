@@ -3,6 +3,7 @@
 # Python
 .venv/
 __pycache__/
+.coverage
 
 # Home Assistant runtime files (repo root is used as a local HA config dir)
 configuration.yaml

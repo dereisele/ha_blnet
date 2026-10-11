@@ -51,7 +51,8 @@
       "no_data": "Verbunden, aber das BL-NET hat keine Werte geliefert. Passwort und CAN-Knoten prüfen."
     },
     "abort": {
-      "reconfigure_successful": "Die BL-NET-Verbindung wurde geändert"
+      "reconfigure_successful": "Die BL-NET-Verbindung wurde geändert",
+      "no_access_mode": "Weboberfläche, BLNET direct oder beides aktivieren"
     }
   },
   "options": {
@@ -72,6 +73,9 @@
     },
     "command_failed": {
       "message": "BL-NET-Ausgang {output} konnte nicht auf {state} gesetzt werden"
+    },
+    "no_data": {
+      "message": "Das BL-NET hat keine Werte geliefert. Passwort und Erreichbarkeit der Weboberfläche prüfen."
     }
   },
   "entity": {

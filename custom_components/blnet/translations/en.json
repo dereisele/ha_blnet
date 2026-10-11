@@ -51,7 +51,8 @@
       "no_data": "Connected, but the BL-NET returned no values. Check the password and the CAN node."
     },
     "abort": {
-      "reconfigure_successful": "The BL-NET connection was changed"
+      "reconfigure_successful": "The BL-NET connection was changed",
+      "no_access_mode": "Enable the web interface, BLNET direct, or both"
     }
   },
   "options": {
@@ -72,6 +73,9 @@
     },
     "command_failed": {
       "message": "Could not set BL-NET output {output} to {state}"
+    },
+    "no_data": {
+      "message": "The BL-NET returned no values. Check the password and that the web interface is reachable."
     }
   },
   "entity": {

@@ -137,6 +137,8 @@ class BLNETConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_import(self, import_data: dict[str, Any]) -> ConfigFlowResult:
         """Import the YAML configuration without testing the connection."""
         data = _entry_data(import_data)
+        if not data[CONF_USE_WEB] and not data[CONF_USE_TA]:
+            return self.async_abort(reason="no_access_mode")
         return self.async_create_entry(
             title=_title(data),
             data=data,

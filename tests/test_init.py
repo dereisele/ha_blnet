@@ -104,3 +104,49 @@ async def test_yaml_entities_are_kept(hass, mock_blnet, mock_config_entry):
     # No duplicates were created for the existing unique IDs
     ids = [e.unique_id for e in er.async_entries_for_config_entry(registry, mock_config_entry.entry_id)]
     assert len(ids) == len(set(ids))
+
+
+async def test_empty_first_fetch_retries(hass, mock_blnet, mock_config_entry):
+    """A web login that silently returns nothing means retry later."""
+    mock_blnet.fetch.return_value = {
+        "analog": {}, "digital": {}, "speed": {}, "power": {}, "energy": {},
+    }
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+    assert mock_config_entry.state is ConfigEntryState.SETUP_RETRY
+
+
+async def test_yaml_switches_are_kept(hass, mock_blnet, mock_config_entry):
+    """Switches from the YAML setup keep entity ID and user-set name."""
+    registry = er.async_get(hass)
+    olds = {}
+    for uid in ("blnet_switch_1", "blnet_mode_switch_1"):
+        old = registry.async_get_or_create("switch", DOMAIN, uid)
+        registry.async_update_entity(old.entity_id, name=f"Mein {uid}")
+        olds[uid] = old.entity_id
+
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    for uid, entity_id in olds.items():
+        new = registry.async_get(entity_id)
+        assert new.unique_id == uid
+        assert new.name == f"Mein {uid}"
+        assert new.config_entry_id == mock_config_entry.entry_id
+    ids = [e.unique_id for e in er.async_entries_for_config_entry(registry, mock_config_entry.entry_id)]
+    assert len(ids) == len(set(ids))
+
+
+async def test_device_configuration_url(hass, mock_blnet, mock_config_entry):
+    """The device links to the BL-NET web page, with a scheme if missing."""
+    from homeassistant.helpers import device_registry as dr
+
+    hass.config_entries.async_update_entry(
+        mock_config_entry, data={**mock_config_entry.data, "resource": "192.168.100.19"}
+    )
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+    device = dr.async_get(hass).async_get_device_by_identifier(
+        (DOMAIN, mock_config_entry.entry_id), mock_config_entry.entry_id
+    )
+    assert device.configuration_url == "http://192.168.100.19"
