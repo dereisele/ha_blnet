@@ -3,6 +3,8 @@ import unittest
 from datetime import datetime
 from unittest.mock import Mock, patch
 
+from homeassistant.exceptions import HomeAssistantError
+
 from custom_components.blnet import BLNETConnector, BLNETDataHandler
 from custom_components.blnet.sensor import BLNETComponent
 
@@ -95,6 +97,13 @@ class TestBLNETDataHandler(unittest.TestCase):
         # Test turn_auto
         handler.turn_auto(1)
         self.blnet.turn_auto.assert_called_once_with(1, self.node)
+
+    def test_turn_failure_raises(self):
+        """Test a failed switch command is reported instead of swallowed."""
+        handler = BLNETDataHandler(self.blnet, self.node, self.hass, self.config)
+        self.blnet.turn_on.side_effect = ConnectionError("Could not log in")
+        with self.assertRaises(HomeAssistantError):
+            handler.turn_on(1)
 
     def test_digital_values_are_bools(self):
         """Test web ("EIN"/"AUS") and direct (1/0) digital values become bools."""

@@ -13,6 +13,7 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
     UnitOfTemperature,
 )
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.discovery import load_platform
 from homeassistant.helpers.event import async_track_time_interval
 
@@ -168,33 +169,25 @@ class BLNETDataHandler:
 
     def turn_off(self, switch_id):
         """Turn off a switch."""
-        _LOGGER.debug(f"Turning off switch {switch_id}")
-        try:
-            self.blnet.turn_off(switch_id, self.node)
-            return True
-        except Exception as ex:
-            _LOGGER.error(f"Error turning off switch {switch_id}: {ex}")
-            return False
+        self._turn(self.blnet.turn_off, switch_id, 'off')
 
     def turn_on(self, switch_id):
         """Turn on a switch."""
-        _LOGGER.debug(f"Turning on switch {switch_id}")
-        try:
-            self.blnet.turn_on(switch_id, self.node)
-            return True
-        except Exception as ex:
-            _LOGGER.error(f"Error turning on switch {switch_id}: {ex}")
-            return False
+        self._turn(self.blnet.turn_on, switch_id, 'on')
 
     def turn_auto(self, switch_id):
         """Set switch to auto mode."""
-        _LOGGER.debug(f"Setting switch {switch_id} to auto mode")
+        self._turn(self.blnet.turn_auto, switch_id, 'auto')
+
+    def _turn(self, turn, switch_id, state):
+        """Set a switch using pyblnet, raising HomeAssistantError on failure."""
+        _LOGGER.debug(f"Setting switch {switch_id} to {state}")
         try:
-            self.blnet.turn_auto(switch_id, self.node)
-            return True
-        except Exception as ex:
-            _LOGGER.error(f"Error setting switch {switch_id} to auto: {ex}")
-            return False
+            turn(switch_id, self.node)
+        except (OSError, ValueError) as ex:
+            raise HomeAssistantError(
+                f"Could not set BL-NET switch {switch_id} to {state}: {ex}"
+            ) from ex
 
     def update(self):
         """Update all data and handle sensor discovery."""
