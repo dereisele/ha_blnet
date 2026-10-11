@@ -16,8 +16,6 @@ import homeassistant.helpers.config_validation as cv
 if TYPE_CHECKING:
     import pyblnet
 
-REQUIREMENTS = ['pyblnet==0.9.3']
-
 _LOGGER = logging.getLogger(__name__)
 DOMAIN = 'blnet'
 
@@ -106,6 +104,16 @@ def setup(hass, config):
     update_handler.schedule_updates()
 
     return True
+
+
+def _digital_to_bool(value):
+    """Convert a digital value to a bool.
+
+    The web interface reports "EIN"/"AUS", BLNET direct reports 1/0.
+    """
+    if isinstance(value, str):
+        return value == 'EIN'
+    return bool(value)
 
 
 class BLNETConnector:
@@ -228,7 +236,7 @@ class BLNETDataHandler:
             self.data[entity_id] = {
                 'friendly_name': sensor.get('name'),
                 'mode': sensor.get('mode'),
-                'value': sensor.get('value')
+                'value': _digital_to_bool(sensor.get('value'))
             }
 
     def _discover_new_devices(self, data):

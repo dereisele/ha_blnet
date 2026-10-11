@@ -78,7 +78,7 @@ class BLNETSwitch(SwitchEntity):
             return
 
         self._friendly_name = sensor_data.get('friendly_name')
-        if sensor_data.get('value') == "EIN":
+        if sensor_data.get('value'):
             self._state = STATE_ON
             self._icon = 'mdi:flash'
         # Nonautomated switch, toggled off => switch off
@@ -150,7 +150,7 @@ class BLNETModeSwitch(SwitchEntity):
         self._name = name
         self._friendly_name = name
         self._state = STATE_UNKNOWN
-        self._activated = self._state
+        self._activated = None
         self._assumed_state = True
         self._icon = None
         self._last_updated = None
@@ -224,7 +224,7 @@ class BLNETModeSwitch(SwitchEntity):
         """Turn the device off, in this case meaning to turn off automation,
         an sending a HAND/EIN or HAND/AUS turn manual control on."""
 
-        if self._activated == "EIN":
+        if self._activated:
             self.communication.turn_on(self._id)
         else:
             self.communication.turn_off(self._id)

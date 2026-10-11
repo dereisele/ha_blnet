@@ -95,6 +95,20 @@ class TestBLNETDataHandler(unittest.TestCase):
         handler.turn_auto(1)
         self.blnet.turn_auto.assert_called_once_with(1, self.node)
 
+    def test_digital_values_are_bools(self):
+        """Test web ("EIN"/"AUS") and direct (1/0) digital values become bools."""
+        handler = BLNETDataHandler(self.blnet, self.node, self.hass, self.config)
+        handler._update_digital_sensors({'digital': {
+            1: {'name': 'web on', 'mode': 'AUTO', 'value': 'EIN'},
+            2: {'name': 'web off', 'mode': 'HAND', 'value': 'AUS'},
+            3: {'value': 1},
+            4: {'value': 0},
+        }})
+        self.assertIs(handler.data['blnet digital 1']['value'], True)
+        self.assertIs(handler.data['blnet digital 2']['value'], False)
+        self.assertIs(handler.data['blnet digital 3']['value'], True)
+        self.assertIs(handler.data['blnet digital 4']['value'], False)
+
 
 class TestBLNETConnector(unittest.TestCase):
     """Test the BLNETConnector class."""
