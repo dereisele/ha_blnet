@@ -56,13 +56,15 @@ async def test_update_uses_can_node(hass, mock_blnet, mock_config_entry):
     mock_blnet.fetch.assert_called_once_with(20)
 
 
-async def test_empty_fetch_gives_empty_data(hass, mock_blnet, mock_config_entry):
-    """A failed web login (empty dicts from pyblnet) gives no entity data."""
+async def test_empty_fetch_fails_update(hass, mock_blnet, mock_config_entry):
+    """A failed web login (empty dicts from pyblnet) is an update failure."""
     mock_blnet.fetch.return_value = {
         "analog": {}, "digital": {}, "speed": {}, "power": {}, "energy": {},
     }
     coordinator = BLNETCoordinator(hass, mock_config_entry)
-    assert await coordinator._async_update_data() == {}
+    with pytest.raises(UpdateFailed) as exc:
+        await coordinator._async_update_data()
+    assert exc.value.translation_key == "no_data"
 
 
 @pytest.mark.parametrize("error", [TimeoutError("timed out"), ConnectionError("x"), ValueError("x")])

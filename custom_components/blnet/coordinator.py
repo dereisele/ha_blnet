@@ -1,5 +1,6 @@
 """Data update coordinator for the BLNET integration."""
 import logging
+import threading
 from collections.abc import Mapping
 from datetime import timedelta
 from typing import Any
@@ -91,15 +92,23 @@ class BLNETCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
             ),
         )
         self.client: BLNET | None = None
+        # The web session (one TAID cookie) is shared: a poll's log_out must not
+        # end a command's session, so executor jobs never use the client in parallel.
+        self._client_lock = threading.Lock()
 
     @property
     def _node(self) -> int | None:
         return self.config_entry.data.get(CONF_NODE)
 
     def _fetch(self) -> dict[str, Any]:
-        if self.client is None:
-            self.client = create_client(self.config_entry.data)
-        return self.client.fetch(self._node)
+        with self._client_lock:
+            if self.client is None:
+                self.client = create_client(self.config_entry.data)
+            return self.client.fetch(self._node)
+
+    def _turn(self, turn: Any, output_id: int) -> None:
+        with self._client_lock:
+            turn(output_id, self._node)
 
     async def _async_update_data(self) -> dict[str, dict[str, Any]]:
         try:
@@ -110,7 +119,11 @@ class BLNETCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
                 translation_key="cannot_connect",
                 translation_placeholders={"error": str(err)},
             ) from err
-        return normalize(raw)
+        data = normalize(raw)
+        if not data:
+            # pyblnet swallows failed web logins and returns empty dicts
+            raise UpdateFailed(translation_domain=DOMAIN, translation_key="no_data")
+        return data
 
     async def async_set_output(self, output_id: int, state: str) -> None:
         """Set a digital output to "on", "off" or "auto" via the web interface."""
@@ -121,7 +134,7 @@ class BLNETCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
             "auto": self.client.turn_auto,
         }[state]
         try:
-            await self.hass.async_add_executor_job(turn, output_id, self._node)
+            await self.hass.async_add_executor_job(self._turn, turn, output_id)
         except (OSError, ValueError) as err:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,

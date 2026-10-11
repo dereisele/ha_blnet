@@ -93,6 +93,7 @@ automation:
 ## Troubleshooting
 
 - Entities unavailable: check the network and open the BL-NET web page in a browser.
+- All entities unavailable with "returned no values" in the log: the web password was changed or is wrong, or another web session is open on the BL-NET. Fix the password via Settings > Devices & services > BLNET > Reconfigure, and close other web sessions.
 - Setup says "no values": check the password and the CAN node.
 - Debug logging:
 
