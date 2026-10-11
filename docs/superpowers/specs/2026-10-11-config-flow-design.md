@@ -24,7 +24,7 @@ Known limitation: deleting the config entry removes its entities from the regist
 
 ## File layout (`common-modules`)
 
-`__init__.py` (setup, YAML import trigger), `const.py`, `config_flow.py`, `coordinator.py`, `entity.py` (shared `BLNETEntity` base with device info), `sensor.py`, `switch.py`, `diagnostics.py`, `strings.json`, `translations/en.json`, `translations/de.json`, `icons.json`, `quality_scale.yaml`.
+`__init__.py` (setup, YAML import trigger), `const.py`, `config_flow.py`, `coordinator.py`, `entity.py` (shared `BLNETEntity` base with device info), `sensor.py`, `switch.py`, `diagnostics.py`, `translations/en.json`, `translations/de.json`, `icons.json`, `quality_scale.yaml`.
 
 ## Config flow
 
@@ -50,7 +50,7 @@ Known limitation: deleting the config entry removes its entities from the regist
 - `_async_update_data` runs in the executor: connect lazily if there is no client yet, `fetch(node)`, then normalise the data into the existing `"blnet <domain> <id>"` → `{value, type, friendly_name, mode}` dict (digital values to bool, as today).
 - pyblnet `OSError`/`ValueError` → `UpdateFailed`. Entities become unavailable and recover on the next successful update; the client is kept (pyblnet ≥ 0.11.1 reconnects by itself). A failed first refresh raises `ConfigEntryNotReady` and Home Assistant retries setup with backoff.
 - The coordinator serialises updates, so the threading lock and the own timer go away.
-- Switch commands (`turn_on`/`turn_off`/`turn_auto`) run in the executor and raise `HomeAssistantError` on failure. On success the entity shows the new state optimistically and calls `coordinator.async_request_refresh()`.
+- Switch commands (`turn_on`/`turn_off`/`turn_auto`) run in the executor and raise `HomeAssistantError` on failure. On success the coordinator refreshes right away, so the switch shows the state the BL-NET reports (no separate optimistic state).
 - All entities get one `DeviceInfo` per entry (manufacturer Technische Alternative, name BL-NET) (`devices`).
 - `UpdateFailed`, `ConfigEntryNotReady` and the switch `HomeAssistantError` use `translation_domain`/`translation_key` (`exception-translations`).
 - Logging when the BL-NET becomes unavailable and comes back is done once each by the coordinator (`log-when-unavailable`).
@@ -76,7 +76,7 @@ Known limitation: deleting the config entry removes its entities from the regist
 
 ## Repair issue and translations
 
-`strings.json` and `translations/en.json` for the config flow, options flow, errors, aborts and the repair issue. German (`translations/de.json`) as well, since the integration targets TA users.
+Home Assistant only reads `translations/<language>.json` for custom integrations (no `strings.json`). `translations/en.json` for the config flow, options flow, errors, aborts and the repair issue. German (`translations/de.json`) as well, since the integration targets TA users.
 
 ## Testing
 
