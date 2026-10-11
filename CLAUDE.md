@@ -4,27 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A Home Assistant custom component (`custom_components/blnet`, distributed via HACS) that integrates the Technische Alternative UVR1611 heating controller through a BL-NET gateway. All device communication is delegated to the [pyblnet](https://github.com/nielstron/pyblnet) library; this repo only maps pyblnet's data onto HA entities.
+A Home Assistant custom component (`custom_components/blnet`, distributed via HACS) that integrates the Technische Alternative UVR1611 heating controller through a BL-NET gateway. All device communication is delegated to the [pyblnet](https://github.com/dereisele/pyblnet) library; this repo only maps pyblnet's data onto HA entities.
 
 ## Commands
 
-Tests use `unittest` (not pytest) and must be run from the repo root so `custom_components.blnet` is importable:
+Dependencies are managed with uv (`pyproject.toml`, `uv.lock`; `.python-version` pins 3.14 locally). Tests use `unittest` (not pytest) and must be run from the repo root so `custom_components.blnet` is importable:
 
 ```bash
-# Full suite (same as CI in .github/workflows/tests.yml)
-python -m unittest discover -s custom_components/blnet/tests
+uv sync                  # install pyblnet, homeassistant and ruff into .venv
+uv run ruff check        # lint (ruff defaults + pyupgrade "UP" rules)
+uv run python -m unittest discover -s custom_components/blnet/tests
 
 # Single test
-python -m unittest custom_components.blnet.tests.test_sensor.TestBLNETDataHandler.test_init
-
-# Install integration requirements from the manifest (what CI does)
-python requirements_from_manifest.py custom_components/blnet/manifest.json > requirements.txt
-pip install -r requirements.txt
+uv run python -m unittest custom_components.blnet.tests.test_switch.TestBLNETModeSwitch.test_hand_mode_is_off
 ```
 
-CI uses Python 3.11 and installs `homeassistant` + `fire` alongside the manifest requirements. A local venv is in `.venv/` (contains `hass`).
+CI (`.github/workflows/tests.yml`) runs `uv sync --locked`, ruff and the tests on Python 3.13 and 3.14 (Home Assistant needs >= 3.13.2).
 
-The repo root doubles as a Home Assistant config directory for manual testing: `configuration.yaml` configures the `blnet` domain against a real BL-NET, and `.storage/`, `home-assistant.log*`, `blueprints/` etc. are HA runtime artifacts; all of these are git-ignored. Run HA against it with `hass -c .`.
+The pyblnet pin exists twice: `requirements` in `manifest.json` (what Home Assistant installs) and `[tool.uv.sources]` in `pyproject.toml` (what dev/CI uses). Change both together and run `uv lock`.
+
+The repo root doubles as a Home Assistant config directory for manual testing: `configuration.yaml` configures the `blnet` domain against a real BL-NET, and `.storage/`, `home-assistant.log*`, `blueprints/` etc. are HA runtime artifacts; all of these are git-ignored. Run HA against it with `uv run hass -c .`.
 
 ## Architecture
 
@@ -36,5 +35,7 @@ The integration uses the legacy YAML-based setup (`setup()` + `load_platform` di
 - `switch.py` — for each digital output (only when `use_web: true`), creates two entities: `BLNETSwitch` (on/off) and `BLNETModeSwitch` (on = `AUTO`, off = `HAND`). Writes go through `BLNETDataHandler.turn_on/turn_off/turn_auto`, which call pyblnet with the configured CAN node. Toggling the output switch puts it into `HAND` mode on the device.
 
 Access modes: `use_web` (BL-NET web interface, required for switching) and `use_ta` (BL-NET direct/"ta_direct" protocol, documented as not fully working). pyblnet comes from the `dereisele/pyblnet` fork, which is not on PyPI; `manifest.json` pins it to a GitHub release tag (e.g. `git+https://github.com/dereisele/pyblnet@0.11.0`). The fork lives next to this repo at `../pyblnet`.
+
+Fetch errors (`OSError`/`ValueError` from pyblnet) mark the data handler and all entities unavailable instead of raising; failed switch commands raise `HomeAssistantError`.
 
 Unique IDs are derived from `blnet_id` (sensors) or the output id (switches); changing that format orphans existing entities in users' entity registries.
