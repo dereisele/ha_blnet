@@ -1,0 +1,117 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to the BL-NET",
+        "data": {
+          "resource": "Address",
+          "password": "Password",
+          "use_web": "Use web interface",
+          "use_ta": "Use BLNET direct",
+          "web_port": "Web interface port",
+          "ta_port": "BLNET direct port",
+          "can_node": "CAN node"
+        },
+        "data_description": {
+          "resource": "Address of the BL-NET, e.g. http://192.168.1.10",
+          "password": "Password of the \"Expert\" user of the web interface. Leave empty if none is set.",
+          "use_web": "Read names and values from the web interface. Needed for switching outputs.",
+          "use_ta": "Read values over the BL-NET's direct TCP connection. Needed for speed, power and energy.",
+          "web_port": "Port of the web interface, usually 80",
+          "ta_port": "Port of the direct connection, usually 40000",
+          "can_node": "CAN node of the controller. Leave empty to keep the node selected on the BL-NET."
+        }
+      },
+      "reconfigure": {
+        "title": "Change BL-NET connection",
+        "data": {
+          "resource": "Address",
+          "password": "Password",
+          "use_web": "Use web interface",
+          "use_ta": "Use BLNET direct",
+          "web_port": "Web interface port",
+          "ta_port": "BLNET direct port",
+          "can_node": "CAN node"
+        },
+        "data_description": {
+          "resource": "Address of the BL-NET, e.g. http://192.168.1.10",
+          "password": "Password of the \"Expert\" user of the web interface. Leave empty if none is set.",
+          "use_web": "Read names and values from the web interface. Needed for switching outputs.",
+          "use_ta": "Read values over the BL-NET's direct TCP connection. Needed for speed, power and energy.",
+          "web_port": "Port of the web interface, usually 80",
+          "ta_port": "Port of the direct connection, usually 40000",
+          "can_node": "CAN node of the controller. Leave empty to keep the node selected on the BL-NET."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the BL-NET",
+      "invalid_config": "Invalid settings",
+      "no_access_mode": "Enable the web interface, BLNET direct, or both",
+      "no_data": "Connected, but the BL-NET returned no values. Check the password and the CAN node."
+    },
+    "abort": {
+      "reconfigure_successful": "The BL-NET connection was changed",
+      "no_access_mode": "Enable the web interface, BLNET direct, or both"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Scan interval"
+        },
+        "data_description": {
+          "scan_interval": "How often to fetch data from the BL-NET, in seconds"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Could not fetch data from the BL-NET: {error}"
+    },
+    "command_failed": {
+      "message": "Could not set BL-NET output {output} to {state}"
+    },
+    "no_data": {
+      "message": "The BL-NET returned no values. Check the password and that the web interface is reachable."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "analog": {
+        "name": "Analog {id}"
+      },
+      "speed": {
+        "name": "Speed {id}"
+      },
+      "power": {
+        "name": "Power {id}"
+      },
+      "energy": {
+        "name": "Energy {id}"
+      },
+      "output": {
+        "name": "Output {id}"
+      }
+    },
+    "switch": {
+      "output": {
+        "name": "Output {id}"
+      },
+      "output_mode": {
+        "name": "Output {id} automatic"
+      },
+      "output_mode_named": {
+        "name": "{name} automatic"
+      }
+    }
+  },
+  "issues": {
+    "deprecated_yaml": {
+      "title": "BLNET YAML configuration is deprecated",
+      "description": "Your `blnet:` configuration was imported into the UI. Remove the `blnet:` block from configuration.yaml and restart Home Assistant. Change settings under Settings > Devices & services > BLNET from now on."
+    }
+  }
+}

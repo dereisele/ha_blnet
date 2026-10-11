@@ -1,0 +1,32 @@
+{
+  "entity": {
+    "sensor": {
+      "speed": {
+        "default": "mdi:speedometer"
+      },
+      "output": {
+        "default": "mdi:flash"
+      }
+    },
+    "switch": {
+      "output": {
+        "default": "mdi:flash",
+        "state": {
+          "off": "mdi:flash-off"
+        }
+      },
+      "output_mode": {
+        "default": "mdi:cog",
+        "state": {
+          "off": "mdi:cog-off"
+        }
+      },
+      "output_mode_named": {
+        "default": "mdi:cog",
+        "state": {
+          "off": "mdi:cog-off"
+        }
+      }
+    }
+  }
+}
