@@ -17,7 +17,6 @@ _LOGGER = logging.getLogger(__name__)
 DOMAIN = 'blnet'
 
 MODE = 'mode'
-FRIENDLY_NAME = 'friendly_name'
 
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
@@ -48,7 +47,6 @@ class BLNETSwitch(SwitchEntity):
         self._id = switch_id
         self.communication = comm
         self._name = name
-        self._friendly_name = name
         self._state = STATE_UNKNOWN
         self._assumed_state = True
         self._icon = None
@@ -73,7 +71,6 @@ class BLNETSwitch(SwitchEntity):
         if sensor_data is None:
             return
 
-        self._friendly_name = sensor_data.get('friendly_name')
         if sensor_data.get('value'):
             self._state = STATE_ON
             self._icon = 'mdi:flash'
@@ -92,27 +89,20 @@ class BLNETSwitch(SwitchEntity):
         return self._name
 
     @property
-    def state(self):
-        """Return the state of the device."""
-        return self._state
-
-    @property
     def icon(self):
         """Return the state of the device."""
         return self._icon
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes of the device."""
-        attrs = {}
-
-        attrs[MODE] = self._mode
-        attrs[FRIENDLY_NAME] = self._friendly_name
-        return attrs
+        return {MODE: self._mode}
 
     @property
     def is_on(self):
-        """Return true if device is on."""
+        """Return true if device is on, None if unknown."""
+        if self._state == STATE_UNKNOWN:
+            return None
         return self._state == STATE_ON
 
     def turn_on(self, **kwargs):
@@ -143,8 +133,7 @@ class BLNETModeSwitch(SwitchEntity):
         self._blnet_id = blnet_id
         self._id = switch_id
         self.communication = comm
-        self._name = name
-        self._friendly_name = name
+        self._name = f"{name} automated"
         self._state = STATE_UNKNOWN
         self._activated = None
         self._assumed_state = True
@@ -169,8 +158,6 @@ class BLNETModeSwitch(SwitchEntity):
         if sensor_data is None:
             return
 
-        self._friendly_name = "{} automated".format(
-            sensor_data.get('friendly_name'))
         if sensor_data.get('mode') == 'HAND':
             self._state = STATE_OFF
             self._icon = 'mdi:cog-off'
@@ -189,26 +176,16 @@ class BLNETModeSwitch(SwitchEntity):
         return self._name
 
     @property
-    def state(self):
-        """Return the state of the device."""
-        return self._state
-
-    @property
     def icon(self):
         """Return the state of the device."""
         return self._icon
 
     @property
-    def device_state_attributes(self):
-        """Return the state attributes of the device."""
-        attrs = {}
-        attrs[FRIENDLY_NAME] = self._friendly_name
-        return attrs
-
-    @property
     def is_on(self):
-        """Return true if device is on."""
-        return self._state
+        """Return true if device is on, None if unknown."""
+        if self._state == STATE_UNKNOWN:
+            return None
+        return self._state == STATE_ON
 
     def turn_on(self, **kwargs):
         """Turn the device on."""
