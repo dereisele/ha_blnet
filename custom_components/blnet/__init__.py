@@ -12,7 +12,6 @@ from homeassistant.const import (
     CONF_PASSWORD,
     CONF_RESOURCE,
     CONF_SCAN_INTERVAL,
-    UnitOfTemperature,
 )
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.discovery import load_platform
@@ -35,21 +34,6 @@ CONF_NODE = 'can_node'
 DEFAULT_WEB_PORT = 80
 DEFAULT_TA_PORT = 40000
 DEFAULT_SCAN_INTERVAL = 360
-
-# Unit and icon mappings
-UNIT_MAPPINGS = {
-    'analog': UnitOfTemperature.CELSIUS,
-    'speed': 'rpm',
-    'power': 'kW',
-    'energy': 'kWh'
-}
-
-ICON_MAPPINGS = {
-    'analog': 'mdi:thermometer',
-    'speed': 'mdi:speedometer',
-    'power': 'mdi:power-plug',
-    'energy': 'mdi:power-plug'
-}
 
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
@@ -244,9 +228,9 @@ class BLNETDataHandler:
         entity_id = f'{DOMAIN} {domain} {key}'
         self.data[entity_id] = {
             'value': sensor.get('value'),
-            'unit_of_measurement': sensor.get('unit_of_measurement', UNIT_MAPPINGS[domain]),
+            # Analog inputs have a type (temperature, volume_flow, ...)
+            'type': sensor.get('type') if domain == 'analog' else domain,
             'friendly_name': sensor.get('name'),
-            'icon': ICON_MAPPINGS[domain]
         }
 
     def _update_digital_sensors(self, data):

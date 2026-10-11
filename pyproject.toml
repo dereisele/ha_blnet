@@ -23,7 +23,7 @@ dev = [
 package = false
 
 [tool.uv.sources]
-pyblnet = { git = "https://github.com/dereisele/pyblnet", tag = "0.11.1" }
+pyblnet = { git = "https://github.com/dereisele/pyblnet", tag = "0.12.0" }
 
 [tool.ruff.lint]
 extend-select = ["UP"]

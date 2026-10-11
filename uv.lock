@@ -1566,7 +1566,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyblnet", git = "https://github.com/dereisele/pyblnet?tag=0.11.1" }]
+requires-dist = [{ name = "pyblnet", git = "https://github.com/dereisele/pyblnet?tag=0.12.0" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1906,12 +1906,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/60/24/97718eff869862e21
 wheels = [
     { url = "https://files.pythonhosted.org/packages/48/e2/a6c3560689bd6180f88cc1bd3cbdf1cc8cfb1e76b39ae44aa10245def81c/homeassistant-2026.10.1-py3-none-any.whl", hash = "sha256:2c3f82b25ec4c62905c2bd229acdd7fa075d1d6b2d701f89b5aaa1d278f01b70", size = 62241157, upload-time = "2026-10-10T16:31:59.037Z" },
 ]
-
-[[package]]
-name = "htmldom"
-version = "2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0a/d6/792e554cf74651a73b0cb8ca24f12fa1563834c5fd804a1a4458432d934f/htmldom-2.0.tar.gz", hash = "sha256:cd8550106f6b8f43383d514826113eb08450a068e7fb81ac2e18bfcdc1e12503", size = 11944, upload-time = "2012-06-28T15:07:00.172Z" }
 
 [[package]]
 name = "httpcore"
@@ -2732,10 +2726,9 @@ wheels = [
 
 [[package]]
 name = "pyblnet"
-version = "0.11.1"
-source = { git = "https://github.com/dereisele/pyblnet?tag=0.11.1#cc757cad52e6ed54e9d0d6b878180ee0dab1f206" }
+version = "0.12.0"
+source = { git = "https://github.com/dereisele/pyblnet?tag=0.12.0#e0f5603c9051c439b421bc90bbc0967790da0048" }
 dependencies = [
-    { name = "htmldom" },
     { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14.2'" },
     { name = "requests", version = "2.34.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14.2'" },
 ]

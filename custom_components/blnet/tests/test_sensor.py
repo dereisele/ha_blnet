@@ -3,6 +3,7 @@ import unittest
 from datetime import datetime
 from unittest.mock import Mock, patch
 
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.exceptions import HomeAssistantError
 
 from custom_components.blnet import BLNETConnector, BLNETDataHandler
@@ -46,6 +47,64 @@ class TestBLNETComponent(unittest.TestCase):
         )
         self.assertEqual(sensor._identifier, "test_blnet_A1")
         self.assertEqual(sensor._friendly_name, "Test Sensor")
+
+
+    def _sensor_for(self, blnet_id, value, sensor_type, unit):
+        """Create a sensor and update it from the given data."""
+        self.communication.data = {blnet_id: {
+            'value': value, 'type': sensor_type,
+            'unit_of_measurement': unit, 'friendly_name': 'x',
+        }}
+        sensor = BLNETComponent(self.hass, 1, 'x', blnet_id, 'x', self.communication)
+        sensor.update()
+        return sensor
+
+    def test_temperature(self):
+        """Test analog temperature inputs are temperature measurements."""
+        sensor = self._sensor_for('blnet analog 1', 21.5, 'temperature', '°C')
+        self.assertEqual(sensor.native_value, 21.5)
+        self.assertEqual(sensor.device_class, SensorDeviceClass.TEMPERATURE)
+        self.assertEqual(sensor.state_class, SensorStateClass.MEASUREMENT)
+        self.assertEqual(sensor.native_unit_of_measurement, '°C')
+
+    def test_volume_flow_uses_home_assistant_unit(self):
+        """Test pyblnet's l/h is reported as Home Assistant's L/h."""
+        sensor = self._sensor_for('blnet analog 16', 120, 'volume_flow', 'l/h')
+        self.assertEqual(sensor.device_class, SensorDeviceClass.VOLUME_FLOW_RATE)
+        self.assertEqual(sensor.native_unit_of_measurement, 'L/h')
+
+    def test_radiation(self):
+        """Test radiation inputs are irradiance measurements."""
+        sensor = self._sensor_for('blnet analog 2', 300, 'radiation', 'W/m²')
+        self.assertEqual(sensor.device_class, SensorDeviceClass.IRRADIANCE)
+        self.assertEqual(sensor.native_unit_of_measurement, 'W/m²')
+
+    def test_energy_is_total_increasing(self):
+        """Test the heat meter energy can be used in the energy dashboard."""
+        sensor = self._sensor_for('blnet energy 1', 362850.9, 'energy', 'kWh')
+        self.assertEqual(sensor.device_class, SensorDeviceClass.ENERGY)
+        self.assertEqual(sensor.state_class, SensorStateClass.TOTAL_INCREASING)
+        self.assertEqual(sensor.native_unit_of_measurement, 'kWh')
+
+    def test_power(self):
+        """Test the heat meter power is a power measurement."""
+        sensor = self._sensor_for('blnet power 1', 6.984, 'power', 'kW')
+        self.assertEqual(sensor.device_class, SensorDeviceClass.POWER)
+        self.assertEqual(sensor.native_unit_of_measurement, 'kW')
+
+    def test_speed_has_no_unit(self):
+        """Test speed levels (0-30) have no unit and no device class."""
+        sensor = self._sensor_for('blnet speed 1', 24, 'speed', None)
+        self.assertIsNone(sensor.device_class)
+        self.assertEqual(sensor.state_class, SensorStateClass.MEASUREMENT)
+        self.assertIsNone(sensor.native_unit_of_measurement)
+
+    def test_unknown_type_has_no_device_class(self):
+        """Test inputs with an unknown type are shown without class or unit."""
+        sensor = self._sensor_for('blnet analog 3', 5, None, None)
+        self.assertIsNone(sensor.device_class)
+        self.assertIsNone(sensor.state_class)
+        self.assertIsNone(sensor.native_unit_of_measurement)
 
 
 class TestBLNETDataHandler(unittest.TestCase):
@@ -148,6 +207,16 @@ class TestBLNETDataHandler(unittest.TestCase):
         with handler._update_lock:
             self.assertIsNone(handler.update())
         self.blnet.fetch.assert_not_called()
+
+    def test_sensor_type(self):
+        """Test the analog input type, or the domain otherwise, is stored as type."""
+        handler = BLNETDataHandler(self.blnet, self.node, self.hass, self.config)
+        handler._update_domain_sensors({
+            'analog': {1: {'value': 120, 'type': 'volume_flow', 'unit_of_measurement': 'l/h'}},
+            'energy': {1: {'value': 1.0, 'unit_of_measurement': 'kWh'}},
+        })
+        self.assertEqual(handler.data['blnet analog 1']['type'], 'volume_flow')
+        self.assertEqual(handler.data['blnet energy 1']['type'], 'energy')
 
     def test_digital_values_are_bools(self):
         """Test web ("EIN"/"AUS") and direct (1/0) digital values become bools."""
