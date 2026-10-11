@@ -1,2 +1,15 @@
 .idea
 **.pyc
+# Python
+.venv/
+__pycache__/
+
+# Home Assistant runtime files (repo root is used as a local HA config dir)
+configuration.yaml
+.HA_VERSION
+.ha_run.lock
+.storage/
+blueprints/
+deps/
+tts/
+home-assistant.log*
