@@ -1552,7 +1552,7 @@ wheels = [
 
 [[package]]
 name = "ha-blnet"
-version = "0.8.0b0"
+version = "0.8.0b1"
 source = { virtual = "." }
 dependencies = [
     { name = "pyblnet" },
@@ -1566,7 +1566,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyblnet", git = "https://github.com/dereisele/pyblnet?tag=0.11.0" }]
+requires-dist = [{ name = "pyblnet", git = "https://github.com/dereisele/pyblnet?tag=0.11.1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2732,8 +2732,8 @@ wheels = [
 
 [[package]]
 name = "pyblnet"
-version = "0.11.0"
-source = { git = "https://github.com/dereisele/pyblnet?tag=0.11.0#f472d0eb08d58b4c8991e5d1aec3587477e65c47" }
+version = "0.11.1"
+source = { git = "https://github.com/dereisele/pyblnet?tag=0.11.1#cc757cad52e6ed54e9d0d6b878180ee0dab1f206" }
 dependencies = [
     { name = "htmldom" },
     { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14.2'" },

@@ -34,7 +34,7 @@ The integration uses the legacy YAML-based setup (`setup()` + `load_platform` di
 - `sensor.py` — `BLNETComponent` entities read their values from `communication.data[blnet_id]` on `update()`. Used for analog/speed/power/energy, and also for digital outputs when `use_web: false`.
 - `switch.py` — for each digital output (only when `use_web: true`), creates two entities: `BLNETSwitch` (on/off) and `BLNETModeSwitch` (on = `AUTO`, off = `HAND`). Writes go through `BLNETDataHandler.turn_on/turn_off/turn_auto`, which call pyblnet with the configured CAN node. Toggling the output switch puts it into `HAND` mode on the device.
 
-Access modes: `use_web` (BL-NET web interface, required for switching) and `use_ta` (BL-NET direct/"ta_direct" protocol, documented as not fully working). pyblnet comes from the `dereisele/pyblnet` fork, which is not on PyPI; `manifest.json` pins it to a GitHub release tag (e.g. `git+https://github.com/dereisele/pyblnet@0.11.0`). The fork lives next to this repo at `../pyblnet`.
+Access modes: `use_web` (BL-NET web interface, required for switching) and `use_ta` (BL-NET direct/"ta_direct" protocol, documented as not fully working). pyblnet comes from the `dereisele/pyblnet` fork, which is not on PyPI; `manifest.json` pins it to a GitHub release tag (e.g. `git+https://github.com/dereisele/pyblnet@0.11.1`). The fork lives next to this repo at `../pyblnet`.
 
 Fetch errors (`OSError`/`ValueError` from pyblnet) mark the data handler and all entities unavailable instead of raising; failed switch commands raise `HomeAssistantError`.
 
