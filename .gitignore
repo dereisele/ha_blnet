@@ -13,4 +13,5 @@ configuration.yaml
 blueprints/
 deps/
 tts/
+.cache/
 home-assistant.log*
