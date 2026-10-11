@@ -12,6 +12,6 @@ def _keys(tree, prefix=""):
 
 
 def test_same_keys():
-    en = json.loads((TRANSLATIONS / "en.json").read_text())
-    de = json.loads((TRANSLATIONS / "de.json").read_text())
+    en = json.loads((TRANSLATIONS / "en.json").read_text(encoding="utf-8"))
+    de = json.loads((TRANSLATIONS / "de.json").read_text(encoding="utf-8"))
     assert _keys(en) == _keys(de)

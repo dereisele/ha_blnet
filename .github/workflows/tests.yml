@@ -24,4 +24,4 @@ jobs:
     - name: Lint
       run: uv run ruff check
     - name: Run tests
-      run: uv run pytest --cov=custom_components.blnet --cov-report=term-missing
+      run: uv run pytest --cov=custom_components.blnet --cov-report=term-missing --cov-fail-under=95
