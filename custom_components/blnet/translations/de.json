@@ -91,6 +91,17 @@
       "output": {
         "name": "Ausgang {id}"
       }
+    },
+    "switch": {
+      "output": {
+        "name": "Ausgang {id}"
+      },
+      "output_mode": {
+        "name": "Ausgang {id} Automatik"
+      },
+      "output_mode_named": {
+        "name": "{name} Automatik"
+      }
     }
   },
   "issues": {

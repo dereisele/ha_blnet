@@ -25,7 +25,7 @@ from .const import (
 )
 from .coordinator import BLNETConfigEntry, BLNETCoordinator
 
-PLATFORMS = [Platform.SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.SWITCH]
 
 # Old YAML configuration, only imported into a config entry
 CONFIG_SCHEMA = vol.Schema(
