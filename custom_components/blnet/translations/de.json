@@ -1,0 +1,10 @@
+{
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Daten konnten nicht vom BL-NET abgerufen werden: {error}"
+    },
+    "command_failed": {
+      "message": "BL-NET-Ausgang {output} konnte nicht auf {state} gesetzt werden"
+    }
+  }
+}
