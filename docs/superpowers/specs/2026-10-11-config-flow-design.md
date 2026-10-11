@@ -50,6 +50,8 @@ Known limitation: deleting the config entry removes its entities from the regist
 - Each platform adds the entities present in the first data, and registers a coordinator listener that adds entities for keys that appear later (same as today's per-poll discovery).
 - Which platform gets digital outputs is decided as today: `switch` when `use_web` is on, otherwise `sensor`.
 - Sensor device class / state class / unit mapping (`SENSOR_TYPES`) is unchanged.
+- An entity is available only if the last update succeeded **and** its key is in that update's data. The data dict is rebuilt on every update, never merged into the previous one. pyblnet ≥ 0.13.0 leaves out inputs reading 409.5 °C (no sensor or broken wire), so such an entity goes unavailable instead of showing its last value forever (today's code keeps stale values; verified).
+- Entities for inputs that no longer appear (Alexander's analog 1-5 and 15) stay registered and unavailable; the user can delete them. They are not removed automatically.
 
 ## Removed
 
@@ -62,6 +64,7 @@ Known limitation: deleting the config entry removes its entities from the regist
 ## Testing
 
 - Dev dependency `pytest-homeassistant-custom-component`; tests run with pytest and a real Home Assistant test instance, pyblnet mocked.
+- Stale value test: an input that disappears from `fetch()` makes its entity unavailable.
 - New tests: user flow (success, `cannot_connect`, `invalid_config`, both access modes off, single instance), options flow, YAML import (entry created without connecting, issue raised, second import aborts), setup/unload, `ConfigEntryNotReady`, `UpdateFailed` → unavailable → recovery, entities added later, switch commands.
 - **Entity preservation test**: pre-populate the entity registry with YAML-era entries (no config entry, custom names), set up the entry, assert same entity IDs and names, now linked to the entry.
 - Existing unit tests move to pytest style where they still apply.
