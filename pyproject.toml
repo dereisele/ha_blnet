@@ -1,0 +1,29 @@
+[project]
+name = "ha-blnet"
+version = "0.8.0.dev0"
+description = "Home Assistant custom component for the UVR1611 via BL-NET"
+readme = "README.md"
+requires-python = ">=3.13.2"
+dependencies = [
+    # Keep in sync with "requirements" in custom_components/blnet/manifest.json
+    "pyblnet",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/dereisele/ha_blnet/"
+"Upstream" = "https://github.com/nielstron/ha_blnet/"
+
+[dependency-groups]
+dev = [
+    "homeassistant>=2026.2.3",
+    "ruff",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+pyblnet = { git = "https://github.com/dereisele/pyblnet", tag = "0.11.0" }
+
+[tool.ruff.lint]
+extend-select = ["UP"]
