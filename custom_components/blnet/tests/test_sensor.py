@@ -124,6 +124,31 @@ class TestBLNETDataHandler(unittest.TestCase):
         self.assertEqual(handler.data['blnet analog 1']['value'], 21.5)
         load_platform.assert_called_once()
 
+    @patch('custom_components.blnet.load_platform')
+    def test_connects_once_blnet_is_reachable(self, load_platform):
+        """Test the client is created on a later update if it failed at startup."""
+        connector = Mock()
+        connector.connect.side_effect = [TimeoutError("timed out"), self.blnet]
+        self.blnet.fetch.return_value = {
+            'analog': {}, 'speed': {}, 'power': {}, 'energy': {}, 'digital': {},
+        }
+        handler = BLNETDataHandler(None, self.node, self.hass, self.config, connector)
+
+        self.assertIsNone(handler.update())
+        self.assertFalse(handler.available)
+
+        handler.update()
+        self.assertTrue(handler.available)
+        self.assertIs(handler.blnet, self.blnet)
+        self.assertEqual(connector.connect.call_count, 2)
+
+    def test_skips_update_while_fetch_is_running(self):
+        """Test a slow fetch is not run twice at the same time on one connection."""
+        handler = BLNETDataHandler(self.blnet, self.node, self.hass, self.config)
+        with handler._update_lock:
+            self.assertIsNone(handler.update())
+        self.blnet.fetch.assert_not_called()
+
     def test_digital_values_are_bools(self):
         """Test web ("EIN"/"AUS") and direct (1/0) digital values become bools."""
         handler = BLNETDataHandler(self.blnet, self.node, self.hass, self.config)

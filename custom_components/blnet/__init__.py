@@ -2,6 +2,7 @@
 Connect to a BL-NET via it's web interface and read and write data
 """
 import logging
+import threading
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
@@ -93,12 +94,16 @@ def setup(hass, config):
     
     try:
         blnet = blnet_connector.connect()
-    except (ValueError, AssertionError) as ex:
-        _LOGGER.error(f"Could not connect to BLNET at {resource}: {ex}")
+    except AssertionError as ex:
+        _LOGGER.error(f"Invalid BLNET configuration: {ex}")
         return False
+    except (OSError, ValueError) as ex:
+        # Retried on every update, so the BL-NET may come up later
+        _LOGGER.warning(f"Could not connect to BLNET at {resource}: {ex}")
+        blnet = None
 
     # Initialize the data handler
-    data_handler = BLNETDataHandler(blnet, can_node, hass, conf)
+    data_handler = BLNETDataHandler(blnet, can_node, hass, conf, blnet_connector)
     hass.data[f"DATA_{DOMAIN}"] = data_handler
 
     # Set up periodic updates
@@ -147,9 +152,14 @@ class BLNETConnector:
 class BLNETDataHandler:
     """Handles data operations for BLNET."""
 
-    def __init__(self, blnet: "pyblnet.BLNET", node, hass, config):
-        """Initialize the data handler."""
+    def __init__(self, blnet: "pyblnet.BLNET | None", node, hass, config,
+                 connector=None):
+        """Initialize the data handler.
+
+        If blnet is None, the connector is used to connect on the next update.
+        """
         self.blnet = blnet
+        self._connector = connector
         self.node = node
         self.data = {}
         self._last_updated = None
@@ -157,6 +167,7 @@ class BLNETDataHandler:
         self._hass = hass
         self._config = config
         self.sensors = set()
+        self._update_lock = threading.Lock()
 
     def last_updated(self):
         """Return the timestamp of the last update."""
@@ -186,6 +197,15 @@ class BLNETDataHandler:
 
     def update(self):
         """Update all data and handle sensor discovery."""
+        if not self._update_lock.acquire(blocking=False):
+            _LOGGER.debug("Previous BLNET update still running, skipping")
+            return None
+        try:
+            return self._update()
+        finally:
+            self._update_lock.release()
+
+    def _update(self):
         try:
             data = self._fetch_data()
         except (OSError, ValueError) as ex:
@@ -203,6 +223,8 @@ class BLNETDataHandler:
 
     def _fetch_data(self):
         """Fetch raw data from BLNET device."""
+        if self.blnet is None:
+            self.blnet = self._connector.connect()
         return self.blnet.fetch(self.node)
 
     def _update_sensor_data(self, data):
