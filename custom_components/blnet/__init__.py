@@ -1,334 +1,80 @@
-"""
-Connect to a BL-NET via it's web interface and read and write data
-"""
-import logging
-import threading
-from datetime import datetime, timedelta
-from typing import TYPE_CHECKING
-
-import homeassistant.helpers.config_validation as cv
+"""The BLNET integration: UVR1611 via BL-NET."""
 import voluptuous as vol
+from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.const import (
     CONF_PASSWORD,
     CONF_RESOURCE,
     CONF_SCAN_INTERVAL,
+    Platform,
 )
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.discovery import load_platform
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.typing import ConfigType
 
-if TYPE_CHECKING:
-    import pyblnet
+from .const import (
+    CONF_NODE,
+    CONF_TA_PORT,
+    CONF_USE_TA,
+    CONF_USE_WEB,
+    CONF_WEB_PORT,
+    DEFAULT_SCAN_INTERVAL,
+    DEFAULT_TA_PORT,
+    DEFAULT_WEB_PORT,
+    DOMAIN,
+)
+from .coordinator import BLNETConfigEntry, BLNETCoordinator
 
-_LOGGER = logging.getLogger(__name__)
-DOMAIN = 'blnet'
+PLATFORMS = [Platform.SENSOR]
 
-# Configuration constants
-CONF_WEB_PORT = 'web_port'
-CONF_TA_PORT = 'ta_port'
-CONF_USE_WEB = 'use_web'
-CONF_USE_TA = 'use_ta'
-CONF_NODE = 'can_node'
-
-# Defaults
-DEFAULT_WEB_PORT = 80
-DEFAULT_TA_PORT = 40000
-DEFAULT_SCAN_INTERVAL = 360
-
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_RESOURCE): cv.url,
-        vol.Optional(CONF_PASSWORD): cv.string,
-        vol.Optional(CONF_NODE): cv.positive_int,
-        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
-        vol.Optional(CONF_WEB_PORT, default=DEFAULT_WEB_PORT): cv.positive_int,
-        vol.Optional(CONF_TA_PORT, default=DEFAULT_TA_PORT): cv.positive_int,
-        vol.Optional(CONF_USE_WEB, default=True): cv.boolean,
-        vol.Optional(CONF_USE_TA, default=False): cv.boolean,
-    }),
-}, extra=vol.ALLOW_EXTRA)
+# Old YAML configuration, only imported into a config entry
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required(CONF_RESOURCE): cv.url,
+                vol.Optional(CONF_PASSWORD): cv.string,
+                vol.Optional(CONF_NODE): cv.positive_int,
+                vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): cv.positive_int,
+                vol.Optional(CONF_WEB_PORT, default=DEFAULT_WEB_PORT): cv.positive_int,
+                vol.Optional(CONF_TA_PORT, default=DEFAULT_TA_PORT): cv.positive_int,
+                vol.Optional(CONF_USE_WEB, default=True): cv.boolean,
+                vol.Optional(CONF_USE_TA, default=False): cv.boolean,
+            }
+        ),
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
-def setup(hass, config):
-    """Set up the BLNET component."""
-    # Extract configuration
-    conf = config[DOMAIN]
-    resource = conf.get(CONF_RESOURCE)
-    password = conf.get(CONF_PASSWORD)
-    can_node = conf.get(CONF_NODE)
-    scan_interval = conf.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-    web_port = conf.get(CONF_WEB_PORT, DEFAULT_WEB_PORT)
-    ta_port = conf.get(CONF_TA_PORT, DEFAULT_TA_PORT)
-    use_web = conf.get(CONF_USE_WEB, True)
-    use_ta = conf.get(CONF_USE_TA, False)
-
-    _LOGGER.debug(
-        f"Setting up BLNET with: resource={resource}, web_port={web_port}, "
-        f"ta_port={ta_port}, use_web={use_web}, use_ta={use_ta}"
-    )
-
-    blnet_connector = BLNETConnector(
-        resource=resource,
-        password=password,
-        web_port=web_port,
-        ta_port=ta_port,
-        use_web=use_web,
-        use_ta=use_ta
-    )
-    
-    try:
-        blnet = blnet_connector.connect()
-    except AssertionError as ex:
-        _LOGGER.error(f"Invalid BLNET configuration: {ex}")
-        return False
-    except (OSError, ValueError) as ex:
-        # Retried on every update, so the BL-NET may come up later
-        _LOGGER.warning(f"Could not connect to BLNET at {resource}: {ex}")
-        blnet = None
-
-    # Initialize the data handler
-    data_handler = BLNETDataHandler(blnet, can_node, hass, conf, blnet_connector)
-    hass.data[f"DATA_{DOMAIN}"] = data_handler
-
-    # Set up periodic updates
-    update_handler = BLNETUpdateHandler(hass, data_handler, scan_interval)
-    update_handler.schedule_updates()
-
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Import a YAML configuration into a config entry."""
+    if DOMAIN in config:
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN, context={"source": SOURCE_IMPORT}, data=dict(config[DOMAIN])
+            )
+        )
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            "deprecated_yaml",
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="deprecated_yaml",
+        )
     return True
 
 
-def _digital_to_bool(value):
-    """Convert a digital value to a bool.
-
-    The web interface reports "EIN"/"AUS", BLNET direct reports 1/0.
-    """
-    if isinstance(value, str):
-        return value == 'EIN'
-    return bool(value)
-
-
-class BLNETConnector:
-    """Handles connection to BLNET device."""
-    
-    def __init__(self, resource, password=None, web_port=DEFAULT_WEB_PORT,
-                 ta_port=DEFAULT_TA_PORT, use_web=True, use_ta=False):
-        """Initialize the connector with explicit parameters."""
-        self.resource = resource
-        self.password = password
-        self.web_port = web_port
-        self.ta_port = ta_port
-        self.use_web = use_web
-        self.use_ta = use_ta
-
-    def connect(self):
-        """Create and return BLNET connection."""
-        from pyblnet import BLNET
-        return BLNET(
-            self.resource,
-            password=self.password,
-            web_port=self.web_port,
-            ta_port=self.ta_port,
-            use_web=self.use_web,
-            use_ta=self.use_ta
-        )
+async def async_setup_entry(hass: HomeAssistant, entry: BLNETConfigEntry) -> bool:
+    """Set up the BL-NET from a config entry."""
+    coordinator = BLNETCoordinator(hass, entry)
+    await coordinator.async_config_entry_first_refresh()
+    entry.runtime_data = coordinator
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    return True
 
 
-class BLNETDataHandler:
-    """Handles data operations for BLNET."""
-
-    def __init__(self, blnet: pyblnet.BLNET | None, node, hass, config,
-                 connector=None):
-        """Initialize the data handler.
-
-        If blnet is None, the connector is used to connect on the next update.
-        """
-        self.blnet = blnet
-        self._connector = connector
-        self.node = node
-        self.data = {}
-        self._last_updated = None
-        self.available = True
-        self._hass = hass
-        self._config = config
-        self.sensors = set()
-        self._update_lock = threading.Lock()
-
-    def last_updated(self):
-        """Return the timestamp of the last update."""
-        return self._last_updated
-
-    def turn_off(self, switch_id):
-        """Turn off a switch."""
-        self._turn(self.blnet.turn_off, switch_id, 'off')
-
-    def turn_on(self, switch_id):
-        """Turn on a switch."""
-        self._turn(self.blnet.turn_on, switch_id, 'on')
-
-    def turn_auto(self, switch_id):
-        """Set switch to auto mode."""
-        self._turn(self.blnet.turn_auto, switch_id, 'auto')
-
-    def _turn(self, turn, switch_id, state):
-        """Set a switch using pyblnet, raising HomeAssistantError on failure."""
-        _LOGGER.debug(f"Setting switch {switch_id} to {state}")
-        try:
-            turn(switch_id, self.node)
-        except (OSError, ValueError) as ex:
-            raise HomeAssistantError(
-                f"Could not set BL-NET switch {switch_id} to {state}: {ex}"
-            ) from ex
-
-    def update(self):
-        """Update all data and handle sensor discovery."""
-        if not self._update_lock.acquire(blocking=False):
-            _LOGGER.debug("Previous BLNET update still running, skipping")
-            return None
-        try:
-            return self._update()
-        finally:
-            self._update_lock.release()
-
-    def _update(self):
-        try:
-            data = self._fetch_data()
-        except (OSError, ValueError) as ex:
-            if self.available:
-                _LOGGER.warning(f"Could not fetch data from BLNET: {ex}")
-            self.available = False
-            return None
-        if not self.available:
-            _LOGGER.info("Fetching data from BLNET works again")
-        self.available = True
-        self._last_updated = datetime.now()
-        self._update_sensor_data(data)
-        self._discover_new_devices(data)
-        return data
-
-    def _fetch_data(self):
-        """Fetch raw data from BLNET device."""
-        if self.blnet is None:
-            self.blnet = self._connector.connect()
-        return self.blnet.fetch(self.node)
-
-    def _update_sensor_data(self, data):
-        """Update data for existing sensors."""
-        _LOGGER.info("Updating sensor data...")
-        self._update_domain_sensors(data)
-        self._update_digital_sensors(data)
-
-    def _update_domain_sensors(self, data):
-        """Update sensors for all domains."""
-        for domain in ['analog', 'speed', 'power', 'energy']:
-            for key, sensor in data.get(domain, {}).items():
-                self._update_single_sensor(domain, key, sensor)
-
-    def _update_single_sensor(self, domain, key, sensor):
-        """Update a single sensor's attributes."""
-        entity_id = f'{DOMAIN} {domain} {key}'
-        self.data[entity_id] = {
-            'value': sensor.get('value'),
-            # Analog inputs have a type (temperature, volume_flow, ...)
-            'type': sensor.get('type') if domain == 'analog' else domain,
-            'friendly_name': sensor.get('name'),
-        }
-
-    def _update_digital_sensors(self, data):
-        """Update digital sensors."""
-        for key, sensor in data.get('digital', {}).items():
-            entity_id = f'{DOMAIN} digital {key}'
-            self.data[entity_id] = {
-                'friendly_name': sensor.get('name'),
-                'mode': sensor.get('mode'),
-                'value': _digital_to_bool(sensor.get('value'))
-            }
-
-    def _discover_new_devices(self, data):
-        """Handle discovery of new devices."""
-        added_count = self._discover_sensors(data)
-        added_count += self._discover_digital_devices(data)
-        if added_count > 0:
-            _LOGGER.info(f"Added {added_count} new devices")
-
-    def _discover_sensors(self, data):
-        """Discover and add new sensors."""
-        added_count = 0
-        for domain in ['analog', 'speed', 'power', 'energy']:
-            for sensor_id in data[domain]:
-                if self._add_single_sensor(domain, sensor_id, data):
-                    added_count += 1
-        return added_count
-
-    def _add_single_sensor(self, domain, sensor_id, data):
-        """Add a single new sensor."""
-        name = data[domain][sensor_id].get('name')
-        blnet_id = f'{DOMAIN} {domain} {sensor_id}'
-        if blnet_id in self.sensors:
-            return False
-
-        self.sensors.add(blnet_id)
-        _LOGGER.info(f"Discovered {domain} sensor {sensor_id} in use, adding")
-
-        disc_info = {
-            'name': name,
-            'domain': domain,
-            'id': sensor_id,
-            'friendly_name': name,
-            'blnet_id': blnet_id
-        }
-        _LOGGER.debug(f"Sensor data for {domain}[{sensor_id}]: {data[domain][sensor_id]} - Disc info: {disc_info}")
-        load_platform(self._hass, 'sensor', DOMAIN, disc_info, self._config)
-        return True
-
-    def _discover_digital_devices(self, data):
-        """Discover and add new digital devices."""
-        added_count = 0
-        for sensor_id in data['digital']:
-            if self._add_digital_device(sensor_id, data):
-                added_count += 1
-        return added_count
-
-    def _add_digital_device(self, sensor_id, data):
-        """Add a single new digital device."""
-        name = data['digital'][sensor_id].get('name')
-        blnet_id = f'{DOMAIN} digital {sensor_id}'
-        if blnet_id in self.sensors:
-            return False
-
-        self.sensors.add(blnet_id)
-        _LOGGER.info(f"Discovered digital sensor {sensor_id} in use, adding")
-
-        disc_info = {
-            'name': name,
-            'domain': 'digital',
-            'id': sensor_id,
-            'friendly_name': name,
-            'blnet_id': blnet_id
-        }
-        component = 'switch' if self._config[CONF_USE_WEB] else 'sensor'
-        load_platform(self._hass, component, DOMAIN, disc_info, self._config)
-        return True
-
-
-class BLNETUpdateHandler:
-    """Handles periodic updates for BLNET."""
-
-    def __init__(self, hass, data_handler, scan_interval):
-        self.hass = hass
-        self.data_handler = data_handler
-        self.scan_interval = scan_interval
-
-    def schedule_updates(self):
-        """Schedule periodic updates."""
-        def fetch_data(*_):
-            return self.data_handler.update()
-
-        # Initial update
-        fetch_data()
-        
-        # Schedule periodic updates
-        async_track_time_interval(
-            self.hass,
-            fetch_data,
-            timedelta(seconds=self.scan_interval)
-        )
+async def async_unload_entry(hass: HomeAssistant, entry: BLNETConfigEntry) -> bool:
+    """Unload a config entry."""
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

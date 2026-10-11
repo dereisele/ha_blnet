@@ -73,5 +73,30 @@
     "command_failed": {
       "message": "BL-NET-Ausgang {output} konnte nicht auf {state} gesetzt werden"
     }
+  },
+  "entity": {
+    "sensor": {
+      "analog": {
+        "name": "Analog {id}"
+      },
+      "speed": {
+        "name": "Drehzahl {id}"
+      },
+      "power": {
+        "name": "Leistung {id}"
+      },
+      "energy": {
+        "name": "Energie {id}"
+      },
+      "output": {
+        "name": "Ausgang {id}"
+      }
+    }
+  },
+  "issues": {
+    "deprecated_yaml": {
+      "title": "BLNET-YAML-Konfiguration ist veraltet",
+      "description": "Deine `blnet:`-Konfiguration wurde in die Oberfläche übernommen. Entferne den `blnet:`-Block aus configuration.yaml und starte Home Assistant neu. Einstellungen änderst du ab jetzt unter Einstellungen > Geräte & Dienste > BLNET."
+    }
   }
 }
