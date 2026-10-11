@@ -5,6 +5,6 @@
   "dependencies": [],
   "documentation": "https://github.com/dereisele/ha_blnet/blob/master/README.md",
   "iot_class": "local_polling",
-  "requirements": ["pyblnet@git+https://github.com/dereisele/pyblnet@0.12.0"],
+  "requirements": ["pyblnet@git+https://github.com/dereisele/pyblnet@0.13.0"],
   "version": "0.8.0b1"
 }

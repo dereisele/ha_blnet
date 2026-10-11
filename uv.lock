@@ -1566,7 +1566,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyblnet", git = "https://github.com/dereisele/pyblnet?tag=0.12.0" }]
+requires-dist = [{ name = "pyblnet", git = "https://github.com/dereisele/pyblnet?tag=0.13.0" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2726,8 +2726,8 @@ wheels = [
 
 [[package]]
 name = "pyblnet"
-version = "0.12.0"
-source = { git = "https://github.com/dereisele/pyblnet?tag=0.12.0#e0f5603c9051c439b421bc90bbc0967790da0048" }
+version = "0.13.0"
+source = { git = "https://github.com/dereisele/pyblnet?tag=0.13.0#f76a7c0bf6b50bd5d62e37fd300baed1358b4e63" }
 dependencies = [
     { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14.2'" },
     { name = "requests", version = "2.34.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14.2'" },
