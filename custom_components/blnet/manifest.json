@@ -2,8 +2,8 @@
   "domain": "blnet",
   "name": "BLNET",
   "documentation": "https://github.com/nielstron/ha_blnet/blob/master/README.md",
-  "requirements": ["pyblnet@git+https://github.com/dereisele/pyblnet@feature/fix-dl-only-mode"],
+  "requirements": ["pyblnet@git+https://github.com/dereisele/pyblnet@0.11.0"],
   "dependencies": [],
   "codeowners": ["@nielstron"],
-  "version": "0.7.2"
+  "version": "0.8.0.dev0"
 }
