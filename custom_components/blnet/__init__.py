@@ -159,6 +159,7 @@ class BLNETDataHandler:
         self.node = node
         self.data = {}
         self._last_updated = None
+        self.available = True
         self._hass = hass
         self._config = config
         self.sensors = set()
@@ -191,8 +192,17 @@ class BLNETDataHandler:
 
     def update(self):
         """Update all data and handle sensor discovery."""
+        try:
+            data = self._fetch_data()
+        except (OSError, ValueError) as ex:
+            if self.available:
+                _LOGGER.warning(f"Could not fetch data from BLNET: {ex}")
+            self.available = False
+            return None
+        if not self.available:
+            _LOGGER.info("Fetching data from BLNET works again")
+        self.available = True
         self._last_updated = datetime.now()
-        data = self._fetch_data()
         self._update_sensor_data(data)
         self._discover_new_devices(data)
         return data

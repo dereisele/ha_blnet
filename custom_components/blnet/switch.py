@@ -89,6 +89,11 @@ class BLNETSwitch(SwitchEntity):
         return self._name
 
     @property
+    def available(self):
+        """Return False if the last fetch from the BL-NET failed."""
+        return self.communication.available
+
+    @property
     def icon(self):
         """Return the state of the device."""
         return self._icon
@@ -174,6 +179,11 @@ class BLNETModeSwitch(SwitchEntity):
     def name(self):
         """Return the name of the switch."""
         return self._name
+
+    @property
+    def available(self):
+        """Return False if the last fetch from the BL-NET failed."""
+        return self.communication.available
 
     @property
     def icon(self):

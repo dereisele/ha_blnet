@@ -57,6 +57,11 @@ class BLNETComponent(Entity):
         return f"blnet_sensor_{self._identifier}"
 
     @property
+    def available(self):
+        """Return False if the last fetch from the BL-NET failed."""
+        return self.communication.available
+
+    @property
     def state(self):
         """Return the state of the device."""
         return self._state

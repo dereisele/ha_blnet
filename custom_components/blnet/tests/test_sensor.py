@@ -105,6 +105,25 @@ class TestBLNETDataHandler(unittest.TestCase):
         with self.assertRaises(HomeAssistantError):
             handler.turn_on(1)
 
+    @patch('custom_components.blnet.load_platform')
+    def test_failed_fetch_marks_unavailable(self, load_platform):
+        """Test a failed fetch marks the handler unavailable until it works again."""
+        handler = BLNETDataHandler(self.blnet, self.node, self.hass, self.config)
+        self.blnet.fetch.side_effect = ConnectionError("Could not get latest data")
+        self.assertIsNone(handler.update())
+        self.assertFalse(handler.available)
+        self.assertIsNone(handler.last_updated())
+
+        self.blnet.fetch.side_effect = None
+        self.blnet.fetch.return_value = {
+            'analog': {1: {'name': 'T1', 'value': 21.5}},
+            'speed': {}, 'power': {}, 'energy': {}, 'digital': {},
+        }
+        handler.update()
+        self.assertTrue(handler.available)
+        self.assertEqual(handler.data['blnet analog 1']['value'], 21.5)
+        load_platform.assert_called_once()
+
     def test_digital_values_are_bools(self):
         """Test web ("EIN"/"AUS") and direct (1/0) digital values become bools."""
         handler = BLNETDataHandler(self.blnet, self.node, self.hass, self.config)
