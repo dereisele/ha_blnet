@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.14.2"
 
 [[package]]
@@ -1127,7 +1127,7 @@ wheels = [
 
 [[package]]
 name = "ha-blnet"
-version = "0.8.0"
+version = "0.8.1"
 source = { virtual = "." }
 dependencies = [
     { name = "pyblnet" },
@@ -1141,7 +1141,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyblnet", git = "https://github.com/dereisele/pyblnet?tag=0.13.0" }]
+requires-dist = [{ name = "pyblnet", git = "https://github.com/dereisele/pyblnet?tag=0.13.1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2039,8 +2039,8 @@ wheels = [
 
 [[package]]
 name = "pyblnet"
-version = "0.13.0"
-source = { git = "https://github.com/dereisele/pyblnet?tag=0.13.0#f76a7c0bf6b50bd5d62e37fd300baed1358b4e63" }
+version = "0.13.1"
+source = { git = "https://github.com/dereisele/pyblnet?tag=0.13.1#f61ac1be0b63118837002c2ddb853c0fe68defa5" }
 dependencies = [
     { name = "requests" },
 ]

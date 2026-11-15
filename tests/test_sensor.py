@@ -63,9 +63,11 @@ async def test_new_input_added_later(hass, mock_blnet, mock_config_entry, freeze
     await _setup(hass, mock_config_entry)
     assert hass.states.get("sensor.bl_net_analog_7") is None
     mock_blnet.fetch.return_value["analog"][7] = {"value": 28.9, "type": "temperature"}
-    freezer.tick(timedelta(seconds=360))
+    # The coordinator's timer fires up to 0.5 s after the interval and
+    # refreshes in a background task
+    freezer.tick(timedelta(seconds=361))
     async_fire_time_changed(hass)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     assert hass.states.get("sensor.bl_net_analog_7").state == "28.9"
 
 
@@ -73,7 +75,9 @@ async def test_missing_input_unavailable(hass, mock_blnet, mock_config_entry, fr
     """An input that disappears (no sensor / broken wire) is unavailable, not stale."""
     await _setup(hass, mock_config_entry)
     del mock_blnet.fetch.return_value["analog"][6]
-    freezer.tick(timedelta(seconds=360))
+    # The coordinator's timer fires up to 0.5 s after the interval and
+    # refreshes in a background task
+    freezer.tick(timedelta(seconds=361))
     async_fire_time_changed(hass)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     assert hass.states.get("sensor.bl_net_ts6").state == STATE_UNAVAILABLE

@@ -8,7 +8,7 @@
   "integration_type": "device",
   "iot_class": "local_polling",
   "loggers": ["pyblnet"],
-  "requirements": ["pyblnet@git+https://github.com/dereisele/pyblnet@0.13.0"],
+  "requirements": ["pyblnet@git+https://github.com/dereisele/pyblnet@0.13.1"],
   "single_config_entry": true,
-  "version": "0.8.0"
+  "version": "0.8.1"
 }

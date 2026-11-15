@@ -26,7 +26,7 @@ ENTRY_DATA = {
     CONF_NODE: None,
 }
 
-# What pyblnet 0.13.0 BLNET.fetch() returns with web interface and direct access
+# What pyblnet 0.13.1 BLNET.fetch() returns with web interface and direct access
 RAW_DATA = {
     "analog": {
         6: {"id": "6", "name": "TS6", "value": 52.4, "type": "temperature",

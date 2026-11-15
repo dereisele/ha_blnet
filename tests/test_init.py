@@ -46,14 +46,18 @@ async def test_unavailable_and_recovery(
     await hass.config_entries.async_setup(mock_config_entry.entry_id)
     await hass.async_block_till_done()
     mock_blnet.fetch.side_effect = ConnectionError("Could not get latest data")
-    freezer.tick(timedelta(seconds=360))
+    # The coordinator's timer fires up to 0.5 s after the interval and
+    # refreshes in a background task
+    freezer.tick(timedelta(seconds=361))
     async_fire_time_changed(hass)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     assert hass.states.get("sensor.bl_net_ts6").state == STATE_UNAVAILABLE
     mock_blnet.fetch.side_effect = None
-    freezer.tick(timedelta(seconds=360))
+    # The coordinator's timer fires up to 0.5 s after the interval and
+    # refreshes in a background task
+    freezer.tick(timedelta(seconds=361))
     async_fire_time_changed(hass)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     assert hass.states.get("sensor.bl_net_ts6").state == "52.4"
 
 
