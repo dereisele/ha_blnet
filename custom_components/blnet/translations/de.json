@@ -1,0 +1,117 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit dem BL-NET verbinden",
+        "data": {
+          "resource": "Adresse",
+          "password": "Passwort",
+          "use_web": "Weboberfläche verwenden",
+          "use_ta": "BLNET direct verwenden",
+          "web_port": "Port der Weboberfläche",
+          "ta_port": "Port für BLNET direct",
+          "can_node": "CAN-Knoten"
+        },
+        "data_description": {
+          "resource": "Adresse des BL-NET, z. B. http://192.168.1.10",
+          "password": "Passwort des Benutzers \"Experte\" der Weboberfläche. Leer lassen, wenn keins gesetzt ist.",
+          "use_web": "Namen und Werte über die Weboberfläche lesen. Nötig zum Schalten von Ausgängen.",
+          "use_ta": "Werte über die direkte TCP-Verbindung des BL-NET lesen. Nötig für Drehzahl, Leistung und Energie.",
+          "web_port": "Port der Weboberfläche, meist 80",
+          "ta_port": "Port der direkten Verbindung, meist 40000",
+          "can_node": "CAN-Knoten des Reglers. Leer lassen, um den am BL-NET gewählten Knoten zu behalten."
+        }
+      },
+      "reconfigure": {
+        "title": "BL-NET-Verbindung ändern",
+        "data": {
+          "resource": "Adresse",
+          "password": "Passwort",
+          "use_web": "Weboberfläche verwenden",
+          "use_ta": "BLNET direct verwenden",
+          "web_port": "Port der Weboberfläche",
+          "ta_port": "Port für BLNET direct",
+          "can_node": "CAN-Knoten"
+        },
+        "data_description": {
+          "resource": "Adresse des BL-NET, z. B. http://192.168.1.10",
+          "password": "Passwort des Benutzers \"Experte\" der Weboberfläche. Leer lassen, wenn keins gesetzt ist.",
+          "use_web": "Namen und Werte über die Weboberfläche lesen. Nötig zum Schalten von Ausgängen.",
+          "use_ta": "Werte über die direkte TCP-Verbindung des BL-NET lesen. Nötig für Drehzahl, Leistung und Energie.",
+          "web_port": "Port der Weboberfläche, meist 80",
+          "ta_port": "Port der direkten Verbindung, meist 40000",
+          "can_node": "CAN-Knoten des Reglers. Leer lassen, um den am BL-NET gewählten Knoten zu behalten."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Keine Verbindung zum BL-NET",
+      "invalid_config": "Ungültige Einstellungen",
+      "no_access_mode": "Weboberfläche, BLNET direct oder beides aktivieren",
+      "no_data": "Verbunden, aber das BL-NET hat keine Werte geliefert. Passwort und CAN-Knoten prüfen."
+    },
+    "abort": {
+      "reconfigure_successful": "Die BL-NET-Verbindung wurde geändert",
+      "no_access_mode": "Weboberfläche, BLNET direct oder beides aktivieren"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Abfrageintervall"
+        },
+        "data_description": {
+          "scan_interval": "Wie oft Daten vom BL-NET abgerufen werden, in Sekunden"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "cannot_connect": {
+      "message": "Daten konnten nicht vom BL-NET abgerufen werden: {error}"
+    },
+    "command_failed": {
+      "message": "BL-NET-Ausgang {output} konnte nicht auf {state} gesetzt werden"
+    },
+    "no_data": {
+      "message": "Das BL-NET hat keine Werte geliefert. Passwort und Erreichbarkeit der Weboberfläche prüfen."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "analog": {
+        "name": "Analog {id}"
+      },
+      "speed": {
+        "name": "Drehzahl {id}"
+      },
+      "power": {
+        "name": "Leistung {id}"
+      },
+      "energy": {
+        "name": "Energie {id}"
+      },
+      "output": {
+        "name": "Ausgang {id}"
+      }
+    },
+    "switch": {
+      "output": {
+        "name": "Ausgang {id}"
+      },
+      "output_mode": {
+        "name": "Ausgang {id} Automatik"
+      },
+      "output_mode_named": {
+        "name": "{name} Automatik"
+      }
+    }
+  },
+  "issues": {
+    "deprecated_yaml": {
+      "title": "BLNET-YAML-Konfiguration ist veraltet",
+      "description": "Deine `blnet:`-Konfiguration wurde in die Oberfläche übernommen. Entferne den `blnet:`-Block aus configuration.yaml und starte Home Assistant neu. Einstellungen änderst du ab jetzt unter Einstellungen > Geräte & Dienste > BLNET."
+    }
+  }
+}

@@ -1,99 +1,88 @@
-"""
-Connect to a BL-NET via it's web interface and read and write data
-"""
-import logging
+"""Sensors for the BLNET integration."""
+from typing import Any
 
-from homeassistant.helpers.entity import Entity
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
+from homeassistant.const import (
+    UnitOfEnergy,
+    UnitOfIrradiance,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfVolumeFlowRate,
+)
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-_LOGGER = logging.getLogger(__name__)
+from .const import CONF_USE_WEB, SENSOR_DOMAINS
+from .coordinator import BLNETConfigEntry, BLNETCoordinator
+from .entity import BLNETEntity
 
-DOMAIN = 'blnet'
-FRIENDLY_NAME = 'friendly_name'
+# The coordinator polls, entities don't
+PARALLEL_UPDATES = 0
+
+# Sensor type (analog input type, or the domain otherwise) ->
+# device class, state class, unit
+SENSOR_TYPES = {
+    "temperature": (SensorDeviceClass.TEMPERATURE, SensorStateClass.MEASUREMENT,
+                    UnitOfTemperature.CELSIUS),
+    "volume_flow": (SensorDeviceClass.VOLUME_FLOW_RATE, SensorStateClass.MEASUREMENT,
+                    UnitOfVolumeFlowRate.LITERS_PER_HOUR),
+    "radiation": (SensorDeviceClass.IRRADIANCE, SensorStateClass.MEASUREMENT,
+                  UnitOfIrradiance.WATTS_PER_SQUARE_METER),
+    "power": (SensorDeviceClass.POWER, SensorStateClass.MEASUREMENT, UnitOfPower.KILO_WATT),
+    "energy": (SensorDeviceClass.ENERGY, SensorStateClass.TOTAL_INCREASING,
+               UnitOfEnergy.KILO_WATT_HOUR),
+    # Speed level 0-30, not rpm
+    "speed": (None, SensorStateClass.MEASUREMENT, None),
+}
 
 
-def setup_platform(hass, config, add_devices, discovery_info=None):
-    """Set up the BLNET component"""
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: BLNETConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    """Add sensors, and more whenever new values appear."""
+    coordinator = entry.runtime_data
+    domains = SENSOR_DOMAINS if entry.data[CONF_USE_WEB] else (*SENSOR_DOMAINS, "digital")
+    known: set[str] = set()
 
-    if discovery_info is None:
-        _LOGGER.error("No BL-Net communication configured")
-        return False
+    @callback
+    def add_new_sensors() -> None:
+        new = [
+            BLNETSensor(coordinator, blnet_id)
+            for blnet_id, data in coordinator.data.items()
+            if data["domain"] in domains and blnet_id not in known
+        ]
+        known.update(sensor.blnet_id for sensor in new)
+        if new:
+            async_add_entities(new)
 
-    sensor_id = discovery_info['id']
-    blnet_id = discovery_info['blnet_id']
-    name = discovery_info['name']
-    friendly_name = discovery_info['friendly_name']
-    _LOGGER.debug(f"Discovery info: {discovery_info}")
-    comm = hass.data['DATA_{}'.format(DOMAIN)]
-
-    add_devices([BLNETComponent(hass, sensor_id, name, blnet_id, friendly_name, comm)], True)
-    return True
+    add_new_sensors()
+    entry.async_on_unload(coordinator.async_add_listener(add_new_sensors))
 
 
-class BLNETComponent(Entity):
-    """Implementation of a BL-NET - UVR1611 sensor and switch component."""
+class BLNETSensor(BLNETEntity, SensorEntity):
+    """A value of the BL-NET."""
 
-    def __init__(self, hass, sensor_id, name, blnet_id, friendly_name, communication):
-        """Initialize the BL-NET sensor."""
-        self._identifier = blnet_id
-        self.communication = communication
-        self._name = name
-        self._friendly_name = friendly_name
-        self._state = None
-        self._unit_of_measurement = None
-        self._icon = None
+    def __init__(self, coordinator: BLNETCoordinator, blnet_id: str) -> None:
+        """Initialize the sensor."""
+        domain = coordinator.data[blnet_id]["domain"]
+        # Digital outputs shown as sensors are named "Output <id>"
+        super().__init__(coordinator, blnet_id, "output" if domain == "digital" else None)
+        # Unchanged from the YAML setup, so existing entities are kept
+        self._attr_unique_id = f"blnet_sensor_{blnet_id}"
+        device_class, state_class, unit = SENSOR_TYPES.get(
+            coordinator.data[blnet_id]["type"], (None, None, None)
+        )
+        self._attr_device_class = device_class
+        self._attr_state_class = state_class
+        self._attr_native_unit_of_measurement = unit
 
     @property
-    def friendly_name(self):
-        """Return the friendly name of the sensor."""
-        return self._friendly_name
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return a unique ID for the sensor."""
-        return f"blnet_sensor_{self._identifier}"
-
-    @property
-    def state(self):
-        """Return the state of the device."""
-        return self._state
-
-    @property
-    def icon(self):
-        """Return the state of the device."""
-        return self._icon
-
-    @property
-    def unit_of_measurement(self):
-        """Return the state of the device."""
-        return self._unit_of_measurement
-
-    @property
-    def device_state_attributes(self):
-        """Return the state attributes of the device."""
-        attrs = {}
-
-        attrs[FRIENDLY_NAME] = self._friendly_name
-        return attrs
-
-    def update(self):
-        """Get the latest data from communication device """
-        sensor_data = self.communication.data.get(self._identifier)
-        
-        if sensor_data is None:
-            _LOGGER.warning(f"No data found for sensor {self._identifier}")
-            return
-
-        _LOGGER.debug(f"Found sensor data: {sensor_data}")
-        # we simply set the identifier using the data from the sensor
-        # self._identifier = sensor_data.get('friendly_name')
-        # self._name = sensor_data.get('friendly_name')
-
-        self._friendly_name = sensor_data.get('friendly_name')
-        self._state = sensor_data.get('value')
-        self._unit_of_measurement = sensor_data.get('unit_of_measurement')
-        self._icon = sensor_data.get('icon')
+    def native_value(self) -> Any:
+        """Return the value."""
+        return self.blnet_data["value"]
